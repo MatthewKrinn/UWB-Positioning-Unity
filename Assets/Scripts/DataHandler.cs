@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using TMPro;
 using UnityEngine;
 
@@ -27,7 +28,7 @@ public class DataHandler : MonoBehaviour
 
 
     // for Rolling Average Filter:
-    [SerializeField] int samplingDataSize = 20;
+    [SerializeField] int samplingDataSize = 5;
 
     // for Kalman Filter:
     // Don't know how to access initial position from player...will have to add later
@@ -61,8 +62,11 @@ public class DataHandler : MonoBehaviour
 
         if (data.Length == 2)
         {
+            // range is data[1] if valid, else 0
             float range = float.TryParse(data[1], out range) ? range : 0;
 
+
+            // data comes from either left or right anchor, add to rolling average list
             if (data[0] == leftAnchorShortName)
             {
                 leftAnchorAVG.Add(range);
@@ -84,23 +88,31 @@ public class DataHandler : MonoBehaviour
                 }
             }
 
+
+            // finally, compute the position of the player
             if (anchor_ranges[0] != 0.00f && anchor_ranges[1] != 0.00f)
             {
                 mRightText.text = "Right Anchor\n" + RoundUp((float)anchor_ranges[0], 1) + " m";
                 mLeftText.text = "Left Anchor\n" + RoundUp((float)anchor_ranges[1], 1) + " m";
-                calcTag((float)anchor_ranges[0], (float)anchor_ranges[1], distanceBetweenTwoAnchors);
+                
+                Vector2 newPosition = calcTag((float)anchor_ranges[0], (float)anchor_ranges[1], distanceBetweenTwoAnchors);
+                var x = newPosition.x;
+                var y = newPosition.y;
+
+                FindObjectOfType<Player>().movePlayer(RoundUp(x, 2), RoundUp(y, 2));
             }
         }
     }
 
     //Using the algorithm from Makerfabs
     //https://www.makerfabs.cc/article/esp32-uwb-indoor-positioning-test.html
-    private void calcTag(float a, float b, float c)
+    private Vector2 calcTag(float a, float b, float c)
     {
         float cos_a = (b * b + c * c - a * a) / (2 * b * c);
         float x = b * cos_a;
         float y = b * Mathf.Sqrt(1 - cos_a * cos_a);
-        FindObjectOfType<Player>().movePlayer(RoundUp(x, 2), RoundUp(y, 2));
+
+        return new Vector2(x, y);
     }
 
     static double RoundUp(float input, int places)
