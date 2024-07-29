@@ -18,14 +18,43 @@ public class DataHandler : MonoBehaviour
     [SerializeField] TextMeshProUGUI mRightText;
 
     [SerializeField] float distanceBetweenTwoAnchors;
-    [SerializeField] int samplingDataSize = 1;
     [SerializeField] String leftAnchorShortName = "83";
     [SerializeField] String rightAnchorShortName = "84";
-    
+
     private List<float> leftAnchorAVG = new List<float>();
     private List<float> rightAnchorAVG = new List<float>();
     private double[] anchor_ranges = new double[2];
 
+
+    // for Rolling Average Filter:
+    [SerializeField] int samplingDataSize = 20;
+
+    // for Kalman Filter:
+    // Don't know how to access initial position from player...will have to add later
+    [SerializeField] bool useFilter = true;
+
+    [SerializeField] float dt = 0.1f;
+    [SerializeField] float processNoise = 0.1f;
+    [SerializeField] float measurementNoise = 1.0f;
+
+    // Kalman Filter
+    private KalmanFilter kalmanFilter;
+
+    private void Awake()
+    {
+        // REMEMBER TO ADD INTIAL LOCATION FIRST.
+        // hmm, maybe I don't even need to technically, if the offset is just visual...
+
+        kalmanFilter = new KalmanFilter(dt, processNoise, measurementNoise);
+    }
+
+    
+    /*notes:
+
+    seems like rawData is a string, data[0] is identifier of anchor, data[1] is numeric value
+
+    */
+    
     public void setData(string rawData)
     {
         string[] data = rawData.Split(',');
