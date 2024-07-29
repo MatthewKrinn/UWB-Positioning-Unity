@@ -26,6 +26,7 @@ public class Player : MonoBehaviour
 
     private void Awake()
     {
+        // NOT SURE WHICH DIRECTIONS X_OFFSET AND Z_OFFSET REFER TO...
         kalmanFilter = new KalmanFilter(dt, processNoise, measurementNoise);
     }
     
