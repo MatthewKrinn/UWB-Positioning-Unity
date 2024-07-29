@@ -3,6 +3,7 @@
   ESP32 + UWB | Indoor Positioning + Unity Visualization
   For More Information: https://youtu.be/c8Pn7lS5Ppg
   Created by Eric N. (ThatProject)
+  Adapted by Matthew K. (Booz Allen Hamilton)
 */
 /////////////////////////////////////////////////////////////////
 
@@ -80,7 +81,6 @@ public class DataHandler : MonoBehaviour
                 anchor_ranges[1] = range;
             }
 
-
             // finally, compute the position of the player.
             // Don't know if I want to add to rolling average queue in the sensor insertion area or down below, which is what I have now
 
@@ -102,21 +102,18 @@ public class DataHandler : MonoBehaviour
                 }
 
 
-                // saw that in original branch, data is not displayed until rolling average list COUNT > samplingSize
-                // IDK if I want to copy that...
+
+                // Changed from if to while in case user changes samplingDataSize in editor
+                while (xPositionRollingQueue.Count > rollingFilterSize)
+                {
+                    xPositionRollingQueue.Dequeue();
+                    yPositionRollingQueue.Dequeue();
+                }
+                xPositionRollingQueue.Enqueue(nextPosition.x);
+                yPositionRollingQueue.Enqueue(nextPosition.y);
+
                 if (useRollingFilter)
                 {
-                    // Changed from if to while in case user changes samplingDataSize in editor
-                    while (xPositionRollingQueue.Count > rollingFilterSize)
-                    {
-                        xPositionRollingQueue.Dequeue();
-                        yPositionRollingQueue.Dequeue();
-                    }
-                    
-
-                    xPositionRollingQueue.Enqueue(nextPosition.x);
-                    yPositionRollingQueue.Enqueue(nextPosition.y);
-
                     nextPosition = new Vector2(xPositionRollingQueue.Average(), yPositionRollingQueue.Average());
                 }
                 
