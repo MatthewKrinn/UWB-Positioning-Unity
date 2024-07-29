@@ -18,7 +18,7 @@ public class DataHandler : MonoBehaviour
     [SerializeField] TextMeshProUGUI mRightText;
 
     [SerializeField] float distanceBetweenTwoAnchors;
-    [SerializeField] int samplingDataSize = 20;
+    [SerializeField] int samplingDataSize = 1;
     [SerializeField] String leftAnchorShortName = "83";
     [SerializeField] String rightAnchorShortName = "84";
     
