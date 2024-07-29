@@ -22,17 +22,19 @@ public class DataHandler : MonoBehaviour
     [SerializeField] String leftAnchorShortName = "83";
     [SerializeField] String rightAnchorShortName = "84";
 
-    private List<float> leftAnchorAVG = new List<float>();
-    private List<float> rightAnchorAVG = new List<float>();
+
+
     private double[] anchor_ranges = new double[2];
 
 
     // for Rolling Average Filter:
-    [SerializeField] int samplingDataSize = 5;
+    [SerializeField] bool useRollingFilter = true; 
+    [SerializeField] int samplingDataSize = 20;
+    
 
     // for Kalman Filter:
     // Don't know how to access initial position from player...will have to add later
-    [SerializeField] bool useFilter = true;
+    [SerializeField] bool useKalmanFilter = true;
 
     [SerializeField] float dt = 0.1f;
     [SerializeField] float processNoise = 0.1f;
@@ -69,23 +71,11 @@ public class DataHandler : MonoBehaviour
             // data comes from either left or right anchor, add to rolling average list
             if (data[0] == leftAnchorShortName)
             {
-                leftAnchorAVG.Add(range);
-
-                if (leftAnchorAVG.Count >= samplingDataSize)
-                {
-                    leftAnchorAVG.RemoveAt(0);
-                    anchor_ranges[0] = leftAnchorAVG.Average();
-                }
+                anchor_ranges[0] = range;
             }
             else
             {
-                rightAnchorAVG.Add(range);
-
-                if (rightAnchorAVG.Count >= samplingDataSize)
-                {
-                    rightAnchorAVG.RemoveAt(0);
-                    anchor_ranges[1] = rightAnchorAVG.Average();
-                }
+                anchor_ranges[1] = range;
             }
 
 
@@ -95,10 +85,24 @@ public class DataHandler : MonoBehaviour
                 mRightText.text = "Right Anchor\n" + RoundUp((float)anchor_ranges[0], 1) + " m";
                 mLeftText.text = "Left Anchor\n" + RoundUp((float)anchor_ranges[1], 1) + " m";
                 
-                Vector2 newPosition = calcTag((float)anchor_ranges[0], (float)anchor_ranges[1], distanceBetweenTwoAnchors);
-                var x = newPosition.x;
-                var y = newPosition.y;
+                Vector2 nextPosition = calcTag((float)anchor_ranges[0], (float)anchor_ranges[1], distanceBetweenTwoAnchors);
+                
 
+                // This way, information is always added to the filter, and user can choose to display the filtered position or not
+                Vector2 filteredPosition = kalmanFilter.UpdateFilter(nextPosition);
+                if (useKalmanFilter)
+                {
+                    nextPosition = filteredPosition;
+                }
+
+                if (useRollingFilter)
+                {
+
+                }
+                
+
+                var x = nextPosition.x;
+                var y = nextPosition.y;
                 FindObjectOfType<Player>().movePlayer(RoundUp(x, 2), RoundUp(y, 2));
             }
         }

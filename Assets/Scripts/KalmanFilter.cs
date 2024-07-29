@@ -1,4 +1,21 @@
-﻿using System;
+﻿////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+Implementation of generic Kalman filter for 2D position tracking.
+Extended Kalman Filter and Unscented Kalman Filter are more advanced versions of this filter.
+I chose the generic filter because EKF is more computationally intensive,
+and might not be the best choice for a POC visualizer.
+
+note:
+Kalman Filter is good for Gaussian noise. Assuming that is the type of noise in the sensor,
+ie, the noise is normally distributed and not like (1,1.1,1.03,5,0.9...), should be good.
+
+In the future, maybe implement an Interacting Multiple Model filter for Daytona tracking
+pit crew as their modes change from running to active working.
+*/
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+using System;
 using UnityEngine;
 
 
