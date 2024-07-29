@@ -95,6 +95,9 @@ public class DataHandler : MonoBehaviour
                     nextPosition = filteredPosition;
                 }
 
+
+                // saw that in original branch, data is not displayed until rolling average list COUNT > samplingSize
+                // IDK if I want to copy that...
                 if (useRollingFilter)
                 {
 
