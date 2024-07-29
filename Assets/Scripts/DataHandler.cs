@@ -90,6 +90,7 @@ public class DataHandler : MonoBehaviour
                 mRightText.text = "Right Anchor\n" + RoundUp((float)anchor_ranges[0], 1) + " m";
                 mLeftText.text = "Left Anchor\n" + RoundUp((float)anchor_ranges[1], 1) + " m";
                 
+                // next position is calculated only off of sensor readings, filterering is done after
                 Vector2 nextPosition = calcTag((float)anchor_ranges[0], (float)anchor_ranges[1], distanceBetweenTwoAnchors);
                 
 
@@ -119,7 +120,6 @@ public class DataHandler : MonoBehaviour
                     nextPosition = new Vector2(xPositionRollingQueue.Average(), yPositionRollingQueue.Average());
                 }
                 
-
                 var x = nextPosition.x;
                 var y = nextPosition.y;
                 FindObjectOfType<Player>().movePlayer(RoundUp(x, 2), RoundUp(y, 2));

@@ -11,6 +11,8 @@ ie, the noise is normally distributed and not like (1,1.1,1.03,5,0.9...), should
 
 In the future, maybe implement an Interacting Multiple Model filter for Daytona tracking
 pit crew as their modes change from running to active working.
+- However, this implementation takes into account position and velocity (change in position),
+    so it might be good enough for the pit crew tracking.
 */
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -114,7 +116,7 @@ public class KalmanFilter
         {
             // Handle inversion failure (S is not invertible)
             Debug.LogWarning("Matrix inversion failed.");
-            // Return vector only transformed with A
+            // Return vector only transformed with A, no Kalman gain
             return new Vector2(x.x, x.y);
         }
 
