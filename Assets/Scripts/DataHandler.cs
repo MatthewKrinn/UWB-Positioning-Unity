@@ -9,7 +9,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using TMPro;
 using UnityEngine;
 
@@ -29,7 +28,9 @@ public class DataHandler : MonoBehaviour
 
     // for Rolling Average Filter:
     [SerializeField] bool useRollingFilter = true; 
-    [SerializeField] int samplingDataSize = 20;
+    [SerializeField] int rollingFilterSize = 20;
+    private Queue<float> xPositionRollingQueue = new Queue<float>();
+    private Queue<float> yPositionRollingQueue = new Queue<float>();
     
 
     // for Kalman Filter:
@@ -46,7 +47,8 @@ public class DataHandler : MonoBehaviour
     private void Awake()
     {
         // REMEMBER TO ADD INTIAL LOCATION FIRST.
-        // hmm, maybe I don't even need to technically, if the offset is just visual...
+        // hmm, maybe I don't even need to technically, if the offset is just visual
+        // and taken into account on the Player side...
 
         kalmanFilter = new KalmanFilter(dt, processNoise, measurementNoise);
     }
@@ -68,7 +70,7 @@ public class DataHandler : MonoBehaviour
             float range = float.TryParse(data[1], out range) ? range : 0;
 
 
-            // data comes from either left or right anchor, add to rolling average list
+            // data comes from either left or right anchor
             if (data[0] == leftAnchorShortName)
             {
                 anchor_ranges[0] = range;
@@ -79,7 +81,10 @@ public class DataHandler : MonoBehaviour
             }
 
 
-            // finally, compute the position of the player
+            // finally, compute the position of the player.
+            // Don't know if I want to add to rolling average queue in the sensor insertion area or down below, which is what I have now
+
+
             if (anchor_ranges[0] != 0.00f && anchor_ranges[1] != 0.00f)
             {
                 mRightText.text = "Right Anchor\n" + RoundUp((float)anchor_ranges[0], 1) + " m";
@@ -100,7 +105,18 @@ public class DataHandler : MonoBehaviour
                 // IDK if I want to copy that...
                 if (useRollingFilter)
                 {
+                    // Changed from if to while in case user changes samplingDataSize in editor
+                    while (xPositionRollingQueue.Count > rollingFilterSize)
+                    {
+                        xPositionRollingQueue.Dequeue();
+                        yPositionRollingQueue.Dequeue();
+                    }
+                    
 
+                    xPositionRollingQueue.Enqueue(nextPosition.x);
+                    yPositionRollingQueue.Enqueue(nextPosition.y);
+
+                    nextPosition = new Vector2(xPositionRollingQueue.Average(), yPositionRollingQueue.Average());
                 }
                 
 
