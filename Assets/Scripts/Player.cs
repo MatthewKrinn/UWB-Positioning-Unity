@@ -22,7 +22,8 @@ public class Player : MonoBehaviour
         if (double.IsNaN(y))
             y = 0;
 
-
+        // Think I don't need to send over offset information to DataHandler, as Player class automatically takes it into account
+        // rather than needing it for the filter. If theory is correct, already implemented correctly.
         transform.position = new Vector3((float)y * meterToSpace * -1 + x_offset, 0, (float)x * meterToSpace + z_offset);
     }
 }
