@@ -70,6 +70,14 @@ public class DataHandler : MonoBehaviour
 
     seems like rawData is a string, data[0] is identifier of anchor, data[1] is numeric value
 
+    NEW FOR MULTITAG BRANCH:
+    - Assume that rawData that comes from anchor now contains the tag identifier, split by comma, so data.Length should be 3 optimally
+    - Assume that Tag Identifier is the first two numbers of MAC address or something, add a dictionary to map them to integers for easier processing
+      - Handle tag dictionary for new tags and for obtaining identifier of old tags
+    - Assume two anchors for simplicity, will build that functionality differently
+    - Make different Kalman Filters for each player, and different rolling filters for each player
+      - Tag ID's will be ints starting at 0 so you can index directly into each List of Filters
+
     */
     
     public void setData(string rawData)
