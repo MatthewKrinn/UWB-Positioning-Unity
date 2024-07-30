@@ -47,11 +47,22 @@ public class DataHandler : MonoBehaviour
 
     private void Awake()
     {
-        // REMEMBER TO ADD INTIAL LOCATION FIRST.
-        // hmm, maybe I don't even need to technically, if the offset is just visual
-        // and taken into account on the Player side...
-
+        // Think I don't need to add intial position because it's taken
+        // into account on the Player Visualization side, not the anchor side...
+        // COULD BE WRONG, HOWEVER!!!
         kalmanFilter = new KalmanFilter(dt, processNoise, measurementNoise);
+    }
+
+    private void OnValidate()
+    {
+        if (Application.isPlaying)
+        {
+            dt = Mathf.Max(0, dt);
+            processNoise = Mathf.Max(0, processNoise);
+            measurementNoise = Mathf.Max(0, measurementNoise);
+
+            rollingFilterSize = Mathf.Max(1, rollingFilterSize);
+        }
     }
 
     
