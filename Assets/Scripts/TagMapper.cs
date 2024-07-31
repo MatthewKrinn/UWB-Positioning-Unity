@@ -15,16 +15,24 @@ public class TagMapper
         tagMap = new Dictionary<string, int>();
     }
 
-    public int GetTagIdFromIdentifier(string macAddress)
+    /// <summary>
+    /// Puts tag ID into id argument and returns true if the tag is new.
+    /// </summary>
+    /// <param name="macAddress"></param>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    public bool GetTagIdFromIdentifier(string macAddress, out int id)
     {
-        if (tagMap.TryGetValue(macAddress, out int id))
+        if (tagMap.TryGetValue(macAddress, out id))
         {
-            return id;
+            
+            return false;
         }
         else
         {
             tagMap.Add(macAddress, nextId);
-            return nextId++;
+            nextId++;
+            return true;
         }
     }
 }
