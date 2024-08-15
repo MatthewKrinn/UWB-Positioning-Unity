@@ -29,6 +29,7 @@ public class Player : MonoBehaviour
         // NOT SURE WHICH DIRECTIONS X_OFFSET AND Z_OFFSET REFER TO...
         kalmanFilter = new KalmanFilter(dt, processNoise, measurementNoise);
     }
+
     
     public void movePlayer(double x, double y)
     {
@@ -37,14 +38,8 @@ public class Player : MonoBehaviour
         if (double.IsNaN(y))
             y = 0;
 
-        if (useFilter)
-        {
-            var result = kalmanFilter.UpdateFilter(new Vector2((float)x, (float)y));
-            
-            x = result[0];
-            y = result[1];
-        }
-
+        // Think I don't need to send over offset information to DataHandler, as Player class automatically takes it into account
+        // rather than needing it for the filter. If theory is correct, already implemented correctly.
         transform.position = new Vector3((float)y * meterToSpace * -1 + x_offset, 0, (float)x * meterToSpace + z_offset);
     }
 }
