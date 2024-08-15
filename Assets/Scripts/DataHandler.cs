@@ -3,6 +3,7 @@
   ESP32 + UWB | Indoor Positioning + Unity Visualization
   For More Information: https://youtu.be/c8Pn7lS5Ppg
   Created by Eric N. (ThatProject)
+  Adapted by Matthew K. (Booz Allen Hamilton)
 */
 /////////////////////////////////////////////////////////////////
 
@@ -18,60 +19,131 @@ public class DataHandler : MonoBehaviour
     [SerializeField] TextMeshProUGUI mRightText;
 
     [SerializeField] float distanceBetweenTwoAnchors;
-    [SerializeField] int samplingDataSize = 20;
     [SerializeField] String leftAnchorShortName = "83";
     [SerializeField] String rightAnchorShortName = "84";
-    
-    private List<float> leftAnchorAVG = new List<float>();
-    private List<float> rightAnchorAVG = new List<float>();
+
+
+
     private double[] anchor_ranges = new double[2];
 
+
+    // for Rolling Average Filter:
+    [SerializeField] bool useRollingFilter = true; 
+    [SerializeField] int rollingFilterSize = 20;
+    private Queue<float> xPositionRollingQueue = new Queue<float>();
+    private Queue<float> yPositionRollingQueue = new Queue<float>();
+    
+
+    // for Kalman Filter:
+    // Don't know how to access initial position from player...will have to add later
+    [SerializeField] bool useKalmanFilter = true;
+
+    [SerializeField] float dt = 0.1f;
+    [SerializeField] float processNoise = 0.1f;
+    [SerializeField] float measurementNoise = 1.0f;
+
+    // Kalman Filter
+    private KalmanFilter kalmanFilter;
+
+    private void Awake()
+    {
+        // Think I don't need to add intial position because it's taken
+        // into account on the Player Visualization side, not the anchor side...
+        // COULD BE WRONG, HOWEVER!!!
+        kalmanFilter = new KalmanFilter(dt, processNoise, measurementNoise);
+    }
+
+    private void OnValidate()
+    {
+        if (Application.isPlaying)
+        {
+            dt = Mathf.Max(0, dt);
+            processNoise = Mathf.Max(0, processNoise);
+            measurementNoise = Mathf.Max(0, measurementNoise);
+
+            rollingFilterSize = Mathf.Max(1, rollingFilterSize);
+        }
+    }
+
+    
+    /*notes:
+
+    seems like rawData is a string, data[0] is identifier of anchor, data[1] is numeric value
+
+    */
+    
     public void setData(string rawData)
     {
         string[] data = rawData.Split(',');
 
         if (data.Length == 2)
         {
+            // range is data[1] if valid, else 0
             float range = float.TryParse(data[1], out range) ? range : 0;
 
+
+            // data comes from either left or right anchor
             if (data[0] == leftAnchorShortName)
             {
-                leftAnchorAVG.Add(range);
-
-                if (leftAnchorAVG.Count >= samplingDataSize)
-                {
-                    leftAnchorAVG.RemoveAt(0);
-                    anchor_ranges[0] = leftAnchorAVG.Average();
-                }
+                anchor_ranges[0] = range;
             }
             else
             {
-                rightAnchorAVG.Add(range);
-
-                if (rightAnchorAVG.Count >= samplingDataSize)
-                {
-                    rightAnchorAVG.RemoveAt(0);
-                    anchor_ranges[1] = rightAnchorAVG.Average();
-                }
+                anchor_ranges[1] = range;
             }
+
+            // finally, compute the position of the player.
+            // Don't know if I want to add to rolling average queue in the sensor insertion area or down below, which is what I have now
+
 
             if (anchor_ranges[0] != 0.00f && anchor_ranges[1] != 0.00f)
             {
                 mRightText.text = "Right Anchor\n" + RoundUp((float)anchor_ranges[0], 1) + " m";
                 mLeftText.text = "Left Anchor\n" + RoundUp((float)anchor_ranges[1], 1) + " m";
-                calcTag((float)anchor_ranges[0], (float)anchor_ranges[1], distanceBetweenTwoAnchors);
+                
+                // next position is calculated only off of sensor readings, filterering is done after
+                Vector2 nextPosition = calcTag((float)anchor_ranges[0], (float)anchor_ranges[1], distanceBetweenTwoAnchors);
+                
+
+                // This way, information is always added to the filter, and user can choose to display the filtered position or not
+                Vector2 filteredPosition = kalmanFilter.UpdateFilter(nextPosition);
+                if (useKalmanFilter)
+                {
+                    nextPosition = filteredPosition;
+                }
+
+
+
+                // Changed from if to while in case user changes samplingDataSize in editor
+                while (xPositionRollingQueue.Count > rollingFilterSize)
+                {
+                    xPositionRollingQueue.Dequeue();
+                    yPositionRollingQueue.Dequeue();
+                }
+                xPositionRollingQueue.Enqueue(nextPosition.x);
+                yPositionRollingQueue.Enqueue(nextPosition.y);
+
+                if (useRollingFilter)
+                {
+                    nextPosition = new Vector2(xPositionRollingQueue.Average(), yPositionRollingQueue.Average());
+                }
+                
+                var x = nextPosition.x;
+                var y = nextPosition.y;
+                FindObjectOfType<Player>().movePlayer(RoundUp(x, 2), RoundUp(y, 2));
             }
         }
     }
 
     //Using the algorithm from Makerfabs
     //https://www.makerfabs.cc/article/esp32-uwb-indoor-positioning-test.html
-    private void calcTag(float a, float b, float c)
+    private Vector2 calcTag(float a, float b, float c)
     {
         float cos_a = (b * b + c * c - a * a) / (2 * b * c);
         float x = b * cos_a;
         float y = b * Mathf.Sqrt(1 - cos_a * cos_a);
-        FindObjectOfType<Player>().movePlayer(RoundUp(x, 2), RoundUp(y, 2));
+
+        return new Vector2(x, y);
     }
 
     static double RoundUp(float input, int places)
