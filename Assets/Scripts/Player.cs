@@ -14,6 +14,22 @@ public class Player : MonoBehaviour
     [SerializeField] int meterToSpace = 20;
     [SerializeField] int x_offset = 20;
     [SerializeField] int z_offset = -20;
+
+    [SerializeField] bool useFilter = true;
+
+    [SerializeField] float dt = 0.1f;
+    [SerializeField] float processNoise = 0.1f;
+    [SerializeField] float measurementNoise = 1.0f;
+
+    // Kalman Filter
+    private KalmanFilter kalmanFilter;
+
+    private void Awake()
+    {
+        // NOT SURE WHICH DIRECTIONS X_OFFSET AND Z_OFFSET REFER TO...
+        kalmanFilter = new KalmanFilter(dt, processNoise, measurementNoise);
+    }
+
     
     public void movePlayer(double x, double y)
     {
